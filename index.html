@@ -33,11 +33,16 @@
             animation: pulse 2s infinite;
         }
         
-        /* Map container */
+        /* Map containers */
         #map {
             height: 60vh;
             width: 100%;
             transition: all 0.3s ease;
+        }
+        
+        #full-map {
+            height: calc(100vh - 56px);
+            width: 100%;
         }
         
         /* Custom marker styling */
@@ -80,30 +85,139 @@
             top: 10px;
             right: 10px;
         }
+        
+        /* Page transitions */
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Alert badge */
+        .alert-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Auth modal */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .auth-modal.active {
+            display: flex;
+        }
+        
+        .auth-card {
+            background-color: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        /* User location marker */
+        .user-location-marker {
+            background-color: #3b82f6;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="auth-modal">
+        <div class="auth-card">
+            <div class="bg-blue-600 text-white p-4 text-center">
+                <h2 class="text-xl font-bold">Welcome to JeepNav</h2>
+                <p class="text-blue-100">Track jeepneys in real-time</p>
+            </div>
+            
+            <div id="login-form" class="p-6">
+                <h3 class="text-lg font-semibold mb-4">Sign In</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">Email</label>
+                        <input type="email" id="login-email" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Password</label>
+                        <input type="password" id="login-password" class="w-full p-2 border rounded">
+                    </div>
+                    <button id="login-btn" class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Sign In</button>
+                    <p class="text-center text-sm text-gray-600">Don't have an account? <a href="#" id="show-signup" class="text-blue-600">Sign up</a></p>
+                </div>
+            </div>
+            
+            <div id="signup-form" class="p-6 hidden">
+                <h3 class="text-lg font-semibold mb-4">Create Account</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">Name</label>
+                        <input type="text" id="signup-name" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Email</label>
+                        <input type="email" id="signup-email" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Password</label>
+                        <input type="password" id="signup-password" class="w-full p-2 border rounded">
+                    </div>
+                    <button id="signup-btn" class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create Account</button>
+                    <p class="text-center text-sm text-gray-600">Already have an account? <a href="#" id="show-login" class="text-blue-600">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- App Container -->
-    <div class="max-w-md mx-auto bg-white shadow-lg rounded-b-xl overflow-hidden">
-        <!-- Header -->
+    <div id="app-container" class="max-w-md mx-auto bg-white shadow-lg rounded-b-xl overflow-hidden hidden">
+        <!-- Header - Same for all pages -->
         <header class="bg-blue-600 text-white p-4 shadow-md">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-1">
-                    <img src="Logo.png" alt="Logo" class="h-12 w-12 inline" />
+                    <img src="Logo.png" class="h-12 w-12 inline" />
                     <h1 class="text-xl font-bold">JeepNav</h1>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <button class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition">
+                    <button id="notifications-btn" class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition relative">
                         <i class="fas fa-bell"></i>
+                        <span id="notification-count" class="alert-badge">3</span>
                     </button>
-                    <button class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition">
+                    <button id="profile-btn" class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition">
                         <i class="fas fa-user"></i>
                     </button>
                 </div>
             </div>
             
-            <!-- Search Bar -->
-            <div class="mt-4 relative">
+            <!-- Search Bar - Only on home and routes pages -->
+            <div id="search-bar" class="mt-4 relative">
                 <input type="text" placeholder="Search routes or destinations..." 
                        class="w-full py-3 px-4 pr-10 rounded-full bg-blue-500 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300">
                 <button class="absolute right-3 top-3 text-blue-200 hover:text-white">
@@ -112,129 +226,422 @@
             </div>
         </header>
         
-        <!-- Main Content -->
-        <main class="pb-20">
-            <!-- Map Container -->
-            <div id="map"></div>
-            
-            <!-- Quick Actions -->
-            <div class="p-4 flex justify-around border-b">
-                <button class="flex flex-col items-center text-blue-600">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
-                        <i class="fas fa-star"></i>
+        <!-- Pages Container -->
+        <div id="pages-container">
+            <!-- Home Page -->
+            <div id="home-page" class="page pb-20">
+                <!-- Map Container -->
+                <div id="map"></div>
+                
+                <!-- Quick Actions -->
+                <div class="p-4 flex justify-around border-b">
+                    <button id="favorites-btn" class="flex flex-col items-center text-blue-600">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <span class="text-xs">Favorites</span>
+                    </button>
+                    <button id="recent-btn" class="flex flex-col items-center text-blue-600">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <span class="text-xs">Recent</span>
+                    </button>
+                    <button id="nearby-btn" class="flex flex-col items-center text-blue-600">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <span class="text-xs">Nearby</span>
+                    </button>
+                    <button id="settings-btn" class="flex flex-col items-center text-blue-600">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <span class="text-xs">Settings</span>
+                    </button>
+                </div>
+                
+                <!-- Active Routes Section -->
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-bus mr-2 text-blue-600"></i> Active Routes in Tuguegarao
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <!-- Route Card 1 -->
+                        <div class="route-card bg-white rounded-lg shadow p-3 border-l-4 border-blue-500" data-route="1A">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Route 1A</h3>
+                                    <p class="text-sm text-gray-600">Centro - Cataggaman</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">3 min away</span>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm">
+                                <span class="text-yellow-500 mr-1"><i class="fas fa-circle"></i></span>
+                                <span class="text-gray-500">Current stop: Tuguegarao City Hall</span>
+                            </div>
+                            <div class="mt-2 flex justify-between text-xs text-gray-500">
+                                <span>Next: CSU Andrews Campus</span>
+                                <span>ETA: 8 min</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Route Card 2 -->
+                        <div class="route-card bg-white rounded-lg shadow p-3 border-l-4 border-green-500" data-route="2B">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Route 2B</h3>
+                                    <p class="text-sm text-gray-600">Centro - Pengue Ruyu</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Arriving now</span>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm">
+                                <span class="text-yellow-500 mr-1"><i class="fas fa-circle"></i></span>
+                                <span class="text-gray-500">Current stop: SM Center Tuguegarao</span>
+                            </div>
+                            <div class="mt-2 flex justify-between text-xs text-gray-500">
+                                <span>Next: Tuguegarao Cathedral</span>
+                                <span>ETA: 5 min</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Route Card 3 -->
+                        <div class="route-card bg-white rounded-lg shadow p-3 border-l-4 border-purple-500" data-route="3C">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Route 3C</h3>
+                                    <p class="text-sm text-gray-600">Centro - Ugac</p>
+                                </div>
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">15 min away</span>
+                            </div>
+                            <div class="mt-2 flex items-center text-sm">
+                                <span class="text-yellow-500 mr-1"><i class="fas fa-circle"></i></span>
+                                <span class="text-gray-500">Current stop: Cagayan State University</span>
+                            </div>
+                            <div class="mt-2 flex justify-between text-xs text-gray-500">
+                                <span>Next: Ugac Market</span>
+                                <span>ETA: 12 min</span>
+                            </div>
+                        </div>
                     </div>
-                    <span class="text-xs">Favorites</span>
-                </button>
-                <button class="flex flex-col items-center text-blue-600">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
-                        <i class="fas fa-history"></i>
-                    </div>
-                    <span class="text-xs">Recent</span>
-                </button>
-                <button class="flex flex-col items-center text-blue-600">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
-                        <i class="fas fa-map-marked-alt"></i>
-                    </div>
-                    <span class="text-xs">Nearby</span>
-                </button>
-                <button class="flex flex-col items-center text-blue-600">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-1">
-                        <i class="fas fa-cog"></i>
-                    </div>
-                    <span class="text-xs">Settings</span>
-                </button>
+                    
+                    <button id="view-all-routes" class="mt-4 w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
+                        <i class="fas fa-plus-circle mr-2"></i> View All Routes
+                    </button>
+                </div>
             </div>
             
-            <!-- Active Routes Section -->
-            <div class="p-4">
-                <h2 class="text-lg font-semibold mb-3 flex items-center">
-                    <i class="fas fa-bus mr-2 text-blue-600"></i> Active Routes in Tuguegarao
-                </h2>
-                
-                <div class="space-y-3">
-                    <!-- Route Card 1 -->
-                    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-blue-500">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-medium">Route 1A</h3>
-                                <p class="text-sm text-gray-600">Centro - Cataggaman</p>
-                            </div>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">3 min away</span>
-                        </div>
-                        <div class="mt-2 flex items-center text-sm">
-                            <span class="text-yellow-500 mr-1"><i class="fas fa-circle"></i></span>
-                            <span class="text-gray-500">Current stop: Tuguegarao City Hall</span>
-                        </div>
-                        <div class="mt-2 flex justify-between text-xs text-gray-500">
-                            <span>Next: CSU Andrews Campus</span>
-                            <span>ETA: 8 min</span>
-                        </div>
-                    </div>
+            <!-- Map Page -->
+            <div id="map-page" class="page">
+                <div id="full-map"></div>
+            </div>
+            
+            <!-- Routes Page -->
+            <div id="routes-page" class="page pb-20">
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-route mr-2 text-blue-600"></i> All Jeepney Routes
+                    </h2>
                     
-                    <!-- Route Card 2 -->
-                    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-green-500">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-medium">Route 2B</h3>
-                                <p class="text-sm text-gray-600">Centro - Pengue Ruyu</p>
+                    <div class="space-y-3">
+                        <!-- Route Filter -->
+                        <div class="flex space-x-2 overflow-x-auto pb-2">
+                            <button class="filter-btn px-4 py-2 bg-blue-600 text-white rounded-full text-sm whitespace-nowrap" data-filter="all">All Routes</button>
+                            <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full text-sm whitespace-nowrap" data-filter="1A">Route 1A</button>
+                            <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full text-sm whitespace-nowrap" data-filter="2B">Route 2B</button>
+                            <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full text-sm whitespace-nowrap" data-filter="3C">Route 3C</button>
+                            <button class="filter-btn px-4 py-2 bg-gray-200 rounded-full text-sm whitespace-nowrap" data-filter="favorites">Favorites</button>
+                        </div>
+                        
+                        <!-- Route List -->
+                        <div class="space-y-3 mt-4">
+                            <!-- Route Item 1 -->
+                            <div class="route-item bg-white rounded-lg shadow p-3 border-l-4 border-blue-500" data-route="1A">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-medium">Route 1A</h3>
+                                        <p class="text-sm text-gray-600">Centro - Cataggaman</p>
+                                    </div>
+                                    <button class="favorite-btn text-gray-400 hover:text-yellow-500">
+                                        <i class="far fa-star"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                        <span>Centro Terminal</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-arrow-down text-blue-500 mr-2 ml-1"></i>
+                                        <span>Tuguegarao City Hall</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-arrow-down text-blue-500 mr-2 ml-1"></i>
+                                        <span>CSU Andrews Campus</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>
+                                        <span>Cataggaman Terminal</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 flex justify-between">
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">5 jeeps active</span>
+                                    <button class="view-on-map text-xs bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700" data-route="1A">View on Map</button>
+                                </div>
                             </div>
-                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Arriving now</span>
-                        </div>
-                        <div class="mt-2 flex items-center text-sm">
-                            <span class="text-yellow-500 mr-1"><i class="fas fa-circle"></i></span>
-                            <span class="text-gray-500">Current stop: SM Center Tuguegarao</span>
-                        </div>
-                        <div class="mt-2 flex justify-between text-xs text-gray-500">
-                            <span>Next: Tuguegarao Cathedral</span>
-                            <span>ETA: 5 min</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Route Card 3 -->
-                    <div class="bg-white rounded-lg shadow p-3 border-l-4 border-purple-500">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <h3 class="font-medium">Route 3C</h3>
-                                <p class="text-sm text-gray-600">Centro - Ugac</p>
+                            
+                            <!-- Route Item 2 -->
+                            <div class="route-item bg-white rounded-lg shadow p-3 border-l-4 border-green-500" data-route="2B">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-medium">Route 2B</h3>
+                                        <p class="text-sm text-gray-600">Centro - Pengue Ruyu</p>
+                                    </div>
+                                    <button class="favorite-btn text-gray-400 hover:text-yellow-500">
+                                        <i class="far fa-star"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                        <span>Centro Terminal</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-arrow-down text-blue-500 mr-2 ml-1"></i>
+                                        <span>SM Center Tuguegarao</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-arrow-down text-blue-500 mr-2 ml-1"></i>
+                                        <span>Tuguegarao Cathedral</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>
+                                        <span>Pengue Ruyu Terminal</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 flex justify-between">
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">3 jeeps active</span>
+                                    <button class="view-on-map text-xs bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700" data-route="2B">View on Map</button>
+                                </div>
                             </div>
-                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">15 min away</span>
-                        </div>
-                        <div class="mt-2 flex items-center text-sm">
-                            <span class="text-yellow-500 mr-1"><i class="fas fa-circle"></i></span>
-                            <span class="text-gray-500">Current stop: Cagayan State University</span>
-                        </div>
-                        <div class="mt-2 flex justify-between text-xs text-gray-500">
-                            <span>Next: Ugac Market</span>
-                            <span>ETA: 12 min</span>
+                            
+                            <!-- Route Item 3 -->
+                            <div class="route-item bg-white rounded-lg shadow p-3 border-l-4 border-purple-500" data-route="3C">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-medium">Route 3C</h3>
+                                        <p class="text-sm text-gray-600">Centro - Ugac</p>
+                                    </div>
+                                    <button class="favorite-btn text-gray-400 hover:text-yellow-500">
+                                        <i class="far fa-star"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                                        <span>Centro Terminal</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-arrow-down text-blue-500 mr-2 ml-1"></i>
+                                        <span>CSU Main Campus</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500 mb-1">
+                                        <i class="fas fa-arrow-down text-blue-500 mr-2 ml-1"></i>
+                                        <span>Ugac Market</span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-map-marker-alt text-green-500 mr-2"></i>
+                                        <span>Ugac Terminal</span>
+                                    </div>
+                                </div>
+                                <div class="mt-3 flex justify-between">
+                                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">4 jeeps active</span>
+                                    <button class="view-on-map text-xs bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700" data-route="3C">View on Map</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <button class="mt-4 w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
-                    <i class="fas fa-plus-circle mr-2"></i> View All Routes
-                </button>
             </div>
-        </main>
+            
+            <!-- Alerts Page -->
+            <div id="alerts-page" class="page pb-20">
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-bell mr-2 text-blue-600"></i> Service Alerts
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <!-- Alert Item 1 -->
+                        <div class="bg-white rounded-lg shadow p-3 border-l-4 border-red-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Route 1A Delay</h3>
+                                    <p class="text-sm text-gray-600">Posted 2 hours ago</p>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">High Priority</span>
+                            </div>
+                            <div class="mt-2 text-sm text-gray-700">
+                                <p>Route 1A is experiencing delays due to road construction near CSU Andrews Campus. Expect additional 15-20 minutes travel time.</p>
+                            </div>
+                            <div class="mt-3 flex items-center text-xs text-gray-500">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span>Expected resolution: Today, 5:00 PM</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Alert Item 2 -->
+                        <div class="bg-white rounded-lg shadow p-3 border-l-4 border-yellow-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Route 3C Detour</h3>
+                                    <p class="text-sm text-gray-600">Posted 5 hours ago</p>
+                                </div>
+                                <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Medium Priority</span>
+                            </div>
+                            <div class="mt-2 text-sm text-gray-700">
+                                <p>Route 3C is temporarily detouring around Ugac Market due to a local festival. Temporary stops are marked on the map.</p>
+                            </div>
+                            <div class="mt-3 flex items-center text-xs text-gray-500">
+                                <i class="fas fa-clock mr-1"></i>
+                                <span>Expected resolution: Tomorrow, 8:00 AM</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Alert Item 3 -->
+                        <div class="bg-white rounded-lg shadow p-3 border-l-4 border-blue-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">New Route Coming Soon</h3>
+                                    <p class="text-sm text-gray-600">Posted 1 day ago</p>
+                                </div>
+                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Announcement</span>
+                            </div>
+                            <div class="mt-2 text-sm text-gray-700">
+                                <p>Starting next week, we'll be adding Route 4D from Centro to Annafunan. Stay tuned for schedule updates!</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Alert Item 4 -->
+                        <div class="bg-white rounded-lg shadow p-3 border-l-4 border-green-500">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-medium">Route 2B Back to Normal</h3>
+                                    <p class="text-sm text-gray-600">Posted 1 day ago</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Resolved</span>
+                            </div>
+                            <div class="mt-2 text-sm text-gray-700">
+                                <p>The water drainage issue along Route 2B has been resolved, and service has returned to normal schedule.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Profile Page -->
+            <div id="profile-page" class="page pb-20">
+                <div class="p-4">
+                    <!-- User Profile Section -->
+                    <div class="flex flex-col items-center mb-6">
+                        <div class="relative mb-3">
+                            <img id="user-avatar" src="pfp.png" alt="Profile" class="w-24 h-24 rounded-full border-4 border-blue-500">
+                            <button class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700">
+                                <i class="fas fa-camera text-sm"></i>
+                            </button>
+                        </div>
+                        <h2 id="user-name" class="text-xl font-semibold">user</h2>
+                        <p id="user-location" class="text-gray-600 text-sm">Tuguegarao City</p>
+                    </div>
+                    
+                    <!-- Account Info -->
+                    <div class="bg-white rounded-lg shadow p-4 mb-4">
+                        <h3 class="font-medium mb-3 flex items-center">
+                            <i class="fas fa-user-circle mr-2 text-blue-600"></i> Account Information
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Email</span>
+                                <span id="user-email">john.doe@example.com</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Phone</span>
+                                <span id="user-phone">+63 9XX XXX XXXX</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Member since</span>
+                                <span id="member-since">January 2023</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preferences -->
+                    <div class="bg-white rounded-lg shadow p-4 mb-4">
+                        <h3 class="font-medium mb-3 flex items-center">
+                            <i class="fas fa-cog mr-2 text-blue-600"></i> Preferences
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Dark Mode</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="dark-mode-toggle" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Notification Alerts</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="notifications-toggle" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">Favorite Routes</span>
+                                <span id="favorite-routes-count" class="text-blue-600">3 routes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="space-y-2">
+                        <button id="saved-locations-btn" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
+                            <i class="fas fa-bookmark mr-2"></i> Saved Locations
+                        </button>
+                        <button id="help-btn" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center justify-center">
+                            <i class="fas fa-question-circle mr-2"></i> Help & Support
+                        </button>
+                        <button id="invite-btn" class="w-full py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition flex items-center justify-center">
+                            <i class="fas fa-share-alt mr-2"></i> Invite Friends
+                        </button>
+                        <button id="signout-btn" class="w-full py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition flex items-center justify-center">
+                            <i class="fas fa-sign-out-alt mr-2"></i> Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- Bottom Navigation -->
         <nav class="fixed bottom-0 max-w-md w-full bg-white border-t flex justify-around py-2">
-            <a href="#" class="p-2 text-blue-600 flex flex-col items-center">
+            <a href="#" class="nav-link p-2 text-blue-600 flex flex-col items-center" data-page="home-page">
                 <i class="fas fa-home text-xl"></i>
                 <span class="text-xs mt-1">Home</span>
             </a>
-            <a href="#" class="p-2 text-gray-500 hover:text-blue-600 flex flex-col items-center">
+            <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center" data-page="map-page">
                 <i class="fas fa-map text-xl"></i>
                 <span class="text-xs mt-1">Map</span>
             </a>
-            <a href="#" class="p-2 text-gray-500 hover:text-blue-600 flex flex-col items-center">
+            <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center" data-page="routes-page">
                 <i class="fas fa-route text-xl"></i>
                 <span class="text-xs mt-1">Routes</span>
             </a>
-            <a href="#" class="p-2 text-gray-500 hover:text-blue-600 flex flex-col items-center">
+            <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center relative" data-page="alerts-page">
                 <i class="fas fa-bell text-xl"></i>
+                <span id="nav-alert-badge" class="alert-badge">3</span>
                 <span class="text-xs mt-1">Alerts</span>
             </a>
-            <a href="#" class="p-2 text-gray-500 hover:text-blue-600 flex flex-col items-center">
+            <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center" data-page="profile-page">
                 <i class="fas fa-user text-xl"></i>
                 <span class="text-xs mt-1">Profile</span>
             </a>
@@ -246,81 +653,223 @@
         // Mapbox access token (replace with your own token)
         mapboxgl.accessToken = 'pk.eyJ1IjoiY2p0YW4iLCJhIjoiY21hYzNxNGxpMDBiNDJpc2RyZXV2ODN4biJ9.Gih4fTMzofAtEnlcIY-J2g';
         
-        // Initialize map centered on Tuguegarao City, Philippines
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
-            center: [121.7333, 17.6131], // Tuguegarao coordinates
-            zoom: 13
-        });
+        // Initialize maps
+        let homeMap, fullMap;
+        let userLocationMarker;
+        let userLocation = null;
         
-        // Add navigation controls
-        map.addControl(new mapboxgl.NavigationControl());
-        
-        // Add geolocate control
-        map.addControl(
-            new mapboxgl.GeolocateControl({
-                positionOptions: {
-                    enableHighAccuracy: true
-                },
-                trackUserLocation: true,
-                showUserHeading: true
-            })
-        );
+        // Sample user data
+        const sampleUser = {
+            name: "User",
+            email: "user@example.com",
+            phone: "+63 9XX XXX XXXX",
+            location: "Tuguegarao City",
+            memberSince: "January 2023",
+            avatar: "pfp.png",
+            favoriteRoutes: ["1A", "3C"]
+        };
         
         // Sample jeepney routes in Tuguegarao
         const routes = [
             {
                 name: "Route 1A",
+                id: "1A",
+                description: "Centro - Cataggaman",
                 stops: [
-                    [121.7333, 17.6131], // Centro
-                    [121.7365, 17.6152], // City Hall
-                    [121.7398, 17.6183], // CSU Andrews
-                    [121.7421, 17.6215]  // Cataggaman
+                    {name: "Centro Terminal", coordinates: [121.7333, 17.6131]},
+                    {name: "Tuguegarao City Hall", coordinates: [121.7365, 17.6152]},
+                    {name: "CSU Andrews Campus", coordinates: [121.7398, 17.6183]},
+                    {name: "Cataggaman Terminal", coordinates: [121.7421, 17.6215]}
                 ],
-                color: "#3b82f6"
+                color: "#3b82f6",
+                activeJeeps: 5
             },
             {
                 name: "Route 2B",
+                id: "2B",
+                description: "Centro - Pengue Ruyu",
                 stops: [
-                    [121.7333, 17.6131], // Centro
-                    [121.7301, 17.6150], // SM Center
-                    [121.7278, 17.6172], // Cathedral
-                    [121.7255, 17.6200]  // Pengue Ruyu
+                    {name: "Centro Terminal", coordinates: [121.7333, 17.6131]},
+                    {name: "SM Center Tuguegarao", coordinates: [121.7301, 17.6150]},
+                    {name: "Tuguegarao Cathedral", coordinates: [121.7278, 17.6172]},
+                    {name: "Pengue Ruyu Terminal", coordinates: [121.7255, 17.6200]}
                 ],
-                color: "#10b981"
+                color: "#10b981",
+                activeJeeps: 3
             },
             {
                 name: "Route 3C",
+                id: "3C",
+                description: "Centro - Ugac",
                 stops: [
-                    [121.7333, 17.6131], // Centro
-                    [121.7355, 17.6100], // CSU Main
-                    [121.7380, 17.6075], // Ugac Market
-                    [121.7400, 17.6050]  // Ugac Terminal
+                    {name: "Centro Terminal", coordinates: [121.7333, 17.6131]},
+                    {name: "CSU Main Campus", coordinates: [121.7355, 17.6100]},
+                    {name: "Ugac Market", coordinates: [121.7380, 17.6075]},
+                    {name: "Ugac Terminal", coordinates: [121.7400, 17.6050]}
                 ],
-                color: "#8b5cf6"
+                color: "#8b5cf6",
+                activeJeeps: 4
             }
         ];
         
-        // Add route lines and stops to the map
-        function addRoutes() {
+        // Initialize the application
+        function initApp() {
+            // Show auth modal first
+            document.getElementById('auth-modal').classList.add('active');
+            
+            // Set up auth modal interactions
+            setupAuthModal();
+            
+            // Initialize maps when user is authenticated
+            // (Maps are initialized after login in the login handler)
+        }
+        
+        // Set up authentication modal
+        function setupAuthModal() {
+            const showSignup = document.getElementById('show-signup');
+            const showLogin = document.getElementById('show-login');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            
+            showSignup.addEventListener('click', function(e) {
+                e.preventDefault();
+                loginForm.classList.add('hidden');
+                signupForm.classList.remove('hidden');
+            });
+            
+            showLogin.addEventListener('click', function(e) {
+                e.preventDefault();
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+            });
+            
+            // Login button handler
+            document.getElementById('login-btn').addEventListener('click', function() {
+                // In a real app, you would validate credentials here
+                // For demo, we'll just log the user in
+                authenticateUser();
+            });
+            
+            // Signup button handler
+            document.getElementById('signup-btn').addEventListener('click', function() {
+                // In a real app, you would create a new user account here
+                // For demo, we'll just log the user in
+                authenticateUser();
+            });
+        }
+        
+        // Authenticate user (demo function)
+        function authenticateUser() {
+            // Hide auth modal
+            document.getElementById('auth-modal').classList.remove('active');
+            
+            // Show app container
+            document.getElementById('app-container').classList.remove('hidden');
+            
+            // Initialize maps
+            initializeMaps();
+            
+            // Load user data
+            loadUserData();
+            
+            // Set up all interactive elements
+            setupInteractivity();
+        }
+        
+        // Initialize maps
+        function initializeMaps() {
+            // Home page map
+            homeMap = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [121.7333, 17.6131], // Tuguegarao coordinates
+                zoom: 13
+            });
+            
+            // Full screen map
+            fullMap = new mapboxgl.Map({
+                container: 'full-map',
+                style: 'mapbox://styles/mapbox/streets-v11',
+                center: [121.7333, 17.6131],
+                zoom: 13
+            });
+            
+            // Add controls to both maps
+            [homeMap, fullMap].forEach(map => {
+                map.addControl(new mapboxgl.NavigationControl());
+                
+                // Add geolocate control with user location marker
+                const geolocate = new mapboxgl.GeolocateControl({
+                    positionOptions: {
+                        enableHighAccuracy: true
+                    },
+                    trackUserLocation: true,
+                    showUserHeading: true,
+                    showAccuracyCircle: false
+                });
+                
+                map.addControl(geolocate);
+                
+                // Create user location marker
+                const el = document.createElement('div');
+                el.className = 'user-location-marker';
+                userLocationMarker = new mapboxgl.Marker(el)
+                    .setLngLat([121.7333, 17.6131]) // Default position
+                    .addTo(map);
+                
+                // Track user location
+                geolocate.on('geolocate', function(e) {
+                    userLocation = [e.coords.longitude, e.coords.latitude];
+                    userLocationMarker.setLngLat(userLocation);
+                    
+                    // Center map on user location if this is the full map
+                    if (map === fullMap) {
+                        map.flyTo({
+                            center: userLocation,
+                            zoom: 15
+                        });
+                    }
+                });
+                
+                // Try to get user location immediately for full map
+                if (map === fullMap) {
+                    geolocate.trigger();
+                }
+            });
+            
+            // Add routes to both maps
+            addRoutesToMap(homeMap);
+            addRoutesToMap(fullMap);
+            
+            // Add jeepneys to both maps
+            addJeepneysToMap(homeMap);
+            addJeepneysToMap(fullMap);
+        }
+        
+        // Add route lines and stops to a map
+        function addRoutesToMap(map) {
             routes.forEach(route => {
-                // Add route line
+                // Prepare coordinates for the route line
+                const coordinates = route.stops.map(stop => stop.coordinates);
+                
+                // Add route line when map loads
                 map.on('load', () => {
-                    map.addLayer({
-                        id: `route-${route.name}`,
-                        type: 'line',
-                        source: {
-                            type: 'geojson',
-                            data: {
-                                type: 'Feature',
-                                properties: {},
-                                geometry: {
-                                    type: 'LineString',
-                                    coordinates: route.stops
-                                }
+                    map.addSource(`route-${route.id}-${map._container.id}`, {
+                        type: 'geojson',
+                        data: {
+                            type: 'Feature',
+                            properties: {},
+                            geometry: {
+                                type: 'LineString',
+                                coordinates: coordinates
                             }
-                        },
+                        }
+                    });
+                    
+                    map.addLayer({
+                        id: `route-${route.id}-${map._container.id}`,
+                        type: 'line',
+                        source: `route-${route.id}-${map._container.id}`,
                         layout: {
                             'line-join': 'round',
                             'line-cap': 'round'
@@ -338,76 +887,369 @@
                     el.className = 'stop-marker';
                     
                     new mapboxgl.Marker(el)
-                        .setLngLat(stop)
+                        .setLngLat(stop.coordinates)
                         .setPopup(new mapboxgl.Popup({ offset: 25 })
-                            .setHTML(`<h3>${route.name} - Stop ${i+1}</h3>`))
+                            .setHTML(`<h3 class="font-medium">${route.name}</h3>
+                                      <p class="text-sm">${stop.name}</p>
+                                      <p class="text-xs text-gray-600">Stop ${i+1} of ${route.stops.length}</p>`))
                         .addTo(map);
                 });
             });
         }
         
-        // Add moving jeepney markers
-        function addJeepneys() {
+        // Add moving jeepney markers to a map
+        function addJeepneysToMap(map) {
             routes.forEach(route => {
-                const el = document.createElement('div');
-                el.className = 'bus-marker';
+                // Add multiple jeepneys per route
+                const jeepneyCount = route.activeJeeps;
                 
-                const marker = new mapboxgl.Marker(el)
-                    .setLngLat(route.stops[0])
-                    .addTo(map);
-                
-                // Animate marker along route
-                let currentStop = 0;
-                const animate = () => {
-                    const nextStop = (currentStop + 1) % route.stops.length;
-                    const start = route.stops[currentStop];
-                    const end = route.stops[nextStop];
+                for (let i = 0; i < jeepneyCount; i++) {
+                    const el = document.createElement('div');
+                    el.className = 'bus-marker';
                     
-                    // Simple linear interpolation for demo
-                    let progress = 0;
-                    const duration = 5000; // 5 seconds between stops
-                    const startTime = Date.now();
+                    // Random starting position along the route
+                    const startStopIndex = Math.floor(Math.random() * route.stops.length);
+                    const nextStopIndex = (startStopIndex + 1) % route.stops.length;
+                    const startStop = route.stops[startStopIndex];
+                    const nextStop = route.stops[nextStopIndex];
                     
-                    const animateStep = () => {
-                        const elapsed = Date.now() - startTime;
-                        progress = Math.min(elapsed / duration, 1);
-                        
-                        const lng = start[0] + (end[0] - start[0]) * progress;
-                        const lat = start[1] + (end[1] - start[1]) * progress;
-                        
-                        marker.setLngLat([lng, lat]);
-                        
-                        if (progress < 1) {
-                            requestAnimationFrame(animateStep);
-                        } else {
-                            currentStop = nextStop;
-                            setTimeout(animate, 1000); // Pause at stop
-                        }
-                    };
+                    // Random progress between stops
+                    const progress = Math.random();
                     
-                    animateStep();
-                };
-                
-                setTimeout(animate, Math.random() * 2000); // Start at random times
+                    const startLng = startStop.coordinates[0];
+                    const startLat = startStop.coordinates[1];
+                    const endLng = nextStop.coordinates[0];
+                    const endLat = nextStop.coordinates[1];
+                    
+                    const lng = startLng + (endLng - startLng) * progress;
+                    const lat = startLat + (endLat - startLat) * progress;
+                    
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat([lng, lat])
+                        .setPopup(new mapboxgl.Popup({ offset: 25 })
+                            .setHTML(`<h3 class="font-medium">${route.name}</h3>
+                                      <p class="text-sm">${route.description}</p>
+                                      <p class="text-xs text-gray-600">Next stop: ${nextStop.name}</p>`))
+                        .addTo(map);
+                    
+                    // Animate marker along route
+                    animateJeepney(marker, route, nextStopIndex);
+                }
             });
         }
         
-        // Initialize map features
-        map.on('load', () => {
-            addRoutes();
-            addJeepneys();
-        });
+        // Animate a jeepney marker along its route
+        function animateJeepney(marker, route, currentStopIndex) {
+            const nextStopIndex = (currentStopIndex + 1) % route.stops.length;
+            const start = route.stops[currentStopIndex].coordinates;
+            const end = route.stops[nextStopIndex].coordinates;
+            
+            // Simple linear interpolation for demo
+            let progress = 0;
+            const duration = 5000 + Math.random() * 10000; // 5-15 seconds between stops
+            const startTime = Date.now();
+            
+            const animateStep = () => {
+                const elapsed = Date.now() - startTime;
+                progress = Math.min(elapsed / duration, 1);
+                
+                const lng = start[0] + (end[0] - start[0]) * progress;
+                const lat = start[1] + (end[1] - start[1]) * progress;
+                
+                marker.setLngLat([lng, lat]);
+                
+                // Update popup content with next stop info
+                const nextStop = route.stops[nextStopIndex];
+                const popupContent = `<h3 class="font-medium">${route.name}</h3>
+                                      <p class="text-sm">${route.description}</p>
+                                      <p class="text-xs text-gray-600">Next stop: ${nextStop.name}</p>`;
+                
+                if (marker.getPopup().isOpen()) {
+                    marker.setPopup(new mapboxgl.Popup({ offset: 25 })
+                        .setHTML(popupContent));
+                } else {
+                    marker.getPopup().setHTML(popupContent);
+                }
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animateStep);
+                } else {
+                    // When reaching the stop, pause briefly then continue to next stop
+                    setTimeout(() => {
+                        animateJeepney(marker, route, nextStopIndex);
+                    }, 1000 + Math.random() * 3000); // Pause 1-4 seconds at stop
+                }
+            };
+            
+            animateStep();
+        }
         
-        // Bottom nav interactivity
-        document.addEventListener('DOMContentLoaded', function() {
-            document.querySelectorAll('nav a').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.querySelectorAll('nav a').forEach(l => l.classList.remove('text-blue-600'));
-                    this.classList.add('text-blue-600');
+        // Load user data into the UI
+        function loadUserData() {
+            document.getElementById('user-name').textContent = sampleUser.name;
+            document.getElementById('user-email').textContent = sampleUser.email;
+            document.getElementById('user-phone').textContent = sampleUser.phone;
+            document.getElementById('user-location').textContent = sampleUser.location;
+            document.getElementById('member-since').textContent = sampleUser.memberSince;
+            document.getElementById('user-avatar').src = sampleUser.avatar;
+            document.getElementById('favorite-routes-count').textContent = `${sampleUser.favoriteRoutes.length} routes`;
+            
+            // Mark favorite routes
+            sampleUser.favoriteRoutes.forEach(routeId => {
+                document.querySelectorAll(`.favorite-btn[data-route="${routeId}"]`).forEach(btn => {
+                    const icon = btn.querySelector('i');
+                    icon.classList.remove('far');
+                    icon.classList.add('fas', 'text-yellow-500');
                 });
             });
-        });
+        }
+        
+        // Set up all interactive elements
+        function setupInteractivity() {
+            // Navigation links
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Get the page to show
+                    const pageId = this.getAttribute('data-page');
+                    
+                    // Hide all pages
+                    document.querySelectorAll('.page').forEach(page => {
+                        page.classList.remove('active');
+                    });
+                    
+                    // Show selected page
+                    document.getElementById(pageId).classList.add('active');
+                    
+                    // Update active nav link
+                    navLinks.forEach(navLink => {
+                        navLink.classList.remove('text-blue-600');
+                        navLink.classList.add('text-gray-500');
+                    });
+                    this.classList.remove('text-gray-500');
+                    this.classList.add('text-blue-600');
+                    
+                    // Toggle search bar visibility
+                    const searchBar = document.getElementById('search-bar');
+                    if (pageId === 'home-page' || pageId === 'routes-page') {
+                        searchBar.style.display = 'block';
+                    } else {
+                        searchBar.style.display = 'none';
+                    }
+                    
+                    // Resize map when switching to map page
+                    if (pageId === 'map-page') {
+                        setTimeout(() => {
+                            fullMap.resize();
+                            // Center on user location if available
+                            if (userLocation) {
+                                fullMap.flyTo({
+                                    center: userLocation,
+                                    zoom: 15
+                                });
+                            }
+                        }, 0);
+                    }
+                });
+            });
+            
+            // Route filtering
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const routeItems = document.querySelectorAll('.route-item');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active filter button
+                    filterButtons.forEach(btn => {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('bg-gray-200');
+                    });
+                    this.classList.remove('bg-gray-200');
+                    this.classList.add('bg-blue-600', 'text-white');
+                    
+                    // Filter routes
+                    const filter = this.getAttribute('data-filter');
+                    
+                    routeItems.forEach(item => {
+                        if (filter === 'all') {
+                            item.style.display = 'block';
+                        } else if (filter === 'favorites') {
+                            const routeId = item.getAttribute('data-route');
+                            if (sampleUser.favoriteRoutes.includes(routeId)) {
+                                item.style.display = 'block';
+                            } else {
+                                item.style.display = 'none';
+                            }
+                        } else if (item.getAttribute('data-route') === filter) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+            
+            // Favorite buttons
+            document.querySelectorAll('.favorite-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const routeId = this.closest('.route-item').getAttribute('data-route');
+                    const icon = this.querySelector('i');
+                    
+                    if (icon.classList.contains('far')) {
+                        // Add to favorites
+                        icon.classList.remove('far');
+                        icon.classList.add('fas', 'text-yellow-500');
+                        
+                        if (!sampleUser.favoriteRoutes.includes(routeId)) {
+                            sampleUser.favoriteRoutes.push(routeId);
+                        }
+                    } else {
+                        // Remove from favorites
+                        icon.classList.add('far');
+                        icon.classList.remove('fas', 'text-yellow-500');
+                        
+                        const index = sampleUser.favoriteRoutes.indexOf(routeId);
+                        if (index > -1) {
+                            sampleUser.favoriteRoutes.splice(index, 1);
+                        }
+                    }
+                    
+                    // Update favorite count
+                    document.getElementById('favorite-routes-count').textContent = 
+                        `${sampleUser.favoriteRoutes.length} routes`;
+                });
+            });
+            
+            // View on map buttons
+            document.querySelectorAll('.view-on-map').forEach(button => {
+                button.addEventListener('click', function() {
+                    const routeId = this.getAttribute('data-route');
+                    const route = routes.find(r => r.id === routeId);
+                    
+                    if (route) {
+                        // Switch to map page
+                        document.querySelector('.nav-link[data-page="map-page"]').click();
+                        
+                        // Fly to the route
+                        const coordinates = route.stops.map(stop => stop.coordinates);
+                        const bounds = coordinates.reduce((bounds, coord) => {
+                            return bounds.extend(coord);
+                        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+                        
+                        fullMap.fitBounds(bounds, {
+                            padding: 50,
+                            maxZoom: 14
+                        });
+                    }
+                });
+            });
+            
+            // Route cards on home page
+            document.querySelectorAll('.route-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    const routeId = this.getAttribute('data-route');
+                    const route = routes.find(r => r.id === routeId);
+                    
+                    if (route) {
+                        // Switch to map page
+                        document.querySelector('.nav-link[data-page="map-page"]').click();
+                        
+                        // Fly to the route
+                        const coordinates = route.stops.map(stop => stop.coordinates);
+                        const bounds = coordinates.reduce((bounds, coord) => {
+                            return bounds.extend(coord);
+                        }, new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]));
+                        
+                        fullMap.fitBounds(bounds, {
+                            padding: 50,
+                            maxZoom: 14
+                        });
+                    }
+                });
+            });
+            
+            // View all routes button
+            document.getElementById('view-all-routes').addEventListener('click', function() {
+                document.querySelector('.nav-link[data-page="routes-page"]').click();
+            });
+            
+            // Quick action buttons
+            document.getElementById('favorites-btn').addEventListener('click', function() {
+                document.querySelector('.nav-link[data-page="routes-page"]').click();
+                document.querySelector('.filter-btn[data-filter="favorites"]').click();
+            });
+            
+            document.getElementById('nearby-btn').addEventListener('click', function() {
+                document.querySelector('.nav-link[data-page="map-page"]').click();
+                
+                // Center on user location if available
+                if (userLocation) {
+                    fullMap.flyTo({
+                        center: userLocation,
+                        zoom: 15
+                    });
+                } else {
+                    // Trigger geolocation if not already available
+                    const geolocate = fullMap._controls.find(control => 
+                        control instanceof mapboxgl.GeolocateControl
+                    );
+                    if (geolocate) {
+                        geolocate.trigger();
+                    }
+                }
+            });
+            
+            // Profile and notification buttons in header
+            document.getElementById('profile-btn').addEventListener('click', function() {
+                document.querySelector('.nav-link[data-page="profile-page"]').click();
+            });
+            
+            document.getElementById('notifications-btn').addEventListener('click', function() {
+                document.querySelector('.nav-link[data-page="alerts-page"]').click();
+                
+                // Clear notification badge
+                document.getElementById('notification-count').style.display = 'none';
+                document.getElementById('nav-alert-badge').style.display = 'none';
+            });
+            
+            // Profile page buttons
+            document.getElementById('signout-btn').addEventListener('click', function() {
+                // In a real app, this would sign the user out
+                // For demo, we'll just reload the page
+                window.location.reload();
+            });
+            
+            // Dark mode toggle
+            document.getElementById('dark-mode-toggle').addEventListener('change', function() {
+                document.body.classList.toggle('bg-gray-900');
+                document.body.classList.toggle('bg-gray-100');
+                document.getElementById('app-container').classList.toggle('bg-white');
+                document.getElementById('app-container').classList.toggle('bg-gray-800');
+                document.getElementById('app-container').classList.toggle('text-gray-800');
+                document.getElementById('app-container').classList.toggle('text-white');
+                
+                // Toggle dark mode for maps
+                const darkMode = this.checked;
+                const style = darkMode ? 
+                    'mapbox://styles/mapbox/dark-v11' : 
+                    'mapbox://styles/mapbox/streets-v11';
+                
+                homeMap.setStyle(style);
+                fullMap.setStyle(style);
+                
+                // Re-add routes after style change
+                setTimeout(() => {
+                    addRoutesToMap(homeMap);
+                    addRoutesToMap(fullMap);
+                }, 500);
+            });
+        }
+        
+        // Initialize the app when the page loads
+        window.addEventListener('load', initApp);
     </script>
 </body>
 </html>
