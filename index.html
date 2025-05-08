@@ -193,6 +193,30 @@
             color: #fbbf24 !important; /* yellow-400 */
         }
 
+        /* Translation Modal Styles */
+        #translation-modal {
+            transition: opacity 0.3s ease;
+        }
+
+        #translation-result {
+            min-height: 60px;
+        }
+
+        .phrase-btn {
+            transition: all 0.2s ease;
+        }
+
+        /* Language Select Dropdowns */
+        #from-language, #to-language {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
@@ -293,6 +317,80 @@
         </div>
     </div>
 
+    <!-- Translation Modal -->
+    <div id="translation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">Real-time Translator</h3>
+                <button id="close-translation" class="text-gray-500">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-4">
+                <div class="mb-4 grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block mb-1 text-sm">From</label>
+                        <select id="from-language" class="w-full p-2 border rounded">
+                            <option value="en">English</option>
+                            <option value="tl">Filipino</option>
+                            <option value="es">Spanish</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm">To</label>
+                        <select id="to-language" class="w-full p-2 border rounded">
+                            <option value="tl">Filipino</option>
+                            <option value="en" selected>English</option>
+                            <option value="es">Spanish</option>
+                            <option value="zh">Chinese</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <textarea id="text-to-translate" class="w-full p-3 border rounded" rows="3" 
+                            placeholder="Type your message here..."></textarea>
+                </div>
+                
+                <button id="translate-text" class="w-full py-2 bg-blue-600 text-white rounded-lg mb-4">
+                    <i class="fas fa-exchange-alt mr-2"></i> Translate
+                </button>
+                
+                <div class="p-3 bg-gray-100 rounded-lg">
+                    <p id="translation-result" class="text-gray-800">Translation will appear here...</p>
+                    <button id="copy-translation" class="mt-2 text-blue-600 text-sm flex items-center">
+                        <i class="fas fa-copy mr-1"></i> Copy Text
+                    </button>
+                </div>
+                
+                <!-- Common Phrases Section -->
+                <div class="mt-4">
+                    <h4 class="font-medium mb-2">Common Phrases</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button class="phrase-btn text-xs p-2 border rounded hover:bg-blue-50" data-phrase="How much to {location}?">
+                            "How much to ___?"
+                        </button>
+                        <button class="phrase-btn text-xs p-2 border rounded hover:bg-blue-50" data-phrase="Where is the nearest jeepney stop?">
+                            "Nearest stop?"
+                        </button>
+                        <button class="phrase-btn text-xs p-2 border rounded hover:bg-blue-50" data-phrase="Does this go to {location}?">
+                            "Goes to ___?"
+                        </button>
+                        <button class="phrase-btn text-xs p-2 border rounded hover:bg-blue-50" data-phrase="Thank you">
+                            "Thank you"
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- App Container -->
     <div id="app-container" class="max-w-md mx-auto bg-white shadow-lg rounded-b-xl overflow-hidden hidden">
         <!-- Header - Same for all pages -->
@@ -303,12 +401,8 @@
                     <h1 class="text-xl font-bold">JeepNav</h1>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <button id="notifications-btn" class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition relative">
-                        <i class="fas fa-bell"></i>
-                        <span id="notification-count" class="alert-badge">3</span>
-                    </button>
-                    <button id="profile-btn" class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition">
-                        <i class="fas fa-user"></i>
+                    <button id="translate-btn" class="p-2 rounded-full bg-blue-500 hover:bg-blue-400 transition">
+                        <i class="fas fa-language"></i>
                     </button>
                 </div>
             </div>
@@ -1075,6 +1169,65 @@
             }, 100);
         }
 
+             // Translation Functionality
+             document.addEventListener('DOMContentLoaded', function() {
+                // Show/hide translation modal
+                document.getElementById('translate-btn').addEventListener('click', function() {
+                    document.getElementById('translation-modal').classList.remove('hidden');
+                });
+                
+                document.getElementById('close-translation').addEventListener('click', function() {
+                    document.getElementById('translation-modal').classList.add('hidden');
+                });
+                
+                // In a real app, you would connect to a translation API like Google Translate
+                // This is a mock implementation for demonstration
+                document.getElementById('translate-text').addEventListener('click', function() {
+                    const text = document.getElementById('text-to-translate').value;
+                    const fromLang = document.getElementById('from-language').value;
+                    const toLang = document.getElementById('to-language').value;
+                    
+                    if (!text.trim()) {
+                        document.getElementById('translation-result').textContent = "Please enter text to translate";
+                        return;
+                    }
+                    
+                    // Mock translation - in real app, call your translation API here
+                    const mockTranslations = {
+                        "en-tl": {
+                            "Hello": "Kamusta",
+                            "How much to the city center?": "Magkano papuntang sentro?",
+                            "Where is the jeepney stop?": "Nasaan ang hintuan ng jeepney?"
+                        },
+                        "tl-en": {
+                            "Kamusta": "Hello",
+                            "Magkano papuntang sentro?": "How much to the city center?",
+                            "Nasaan ang hintuan ng jeepney?": "Where is the jeepney stop?"
+                        }
+                    };
+                    
+                    const translationKey = `${fromLang}-${toLang}`;
+                    let translatedText = mockTranslations[translationKey]?.[text] || 
+                                    `[Translated from ${fromLang} to ${toLang}]: ${text}`;
+                    
+                    document.getElementById('translation-result').textContent = translatedText;
+                });
+                
+                // Copy translation
+                document.getElementById('copy-translation').addEventListener('click', function() {
+                    const text = document.getElementById('translation-result').textContent;
+                    navigator.clipboard.writeText(text);
+                    alert("Copied to clipboard!");
+                });
+                
+                // Common phrases buttons
+                document.querySelectorAll('.phrase-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.getElementById('text-to-translate').value = this.getAttribute('data-phrase');
+                    });
+                });
+            });
+
         // Rating System Functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Show rating modal
@@ -1385,7 +1538,7 @@
                     });
                 });
             });
-            
+
             // Favorite buttons
             document.querySelectorAll('.favorite-btn').forEach(button => {
                 button.addEventListener('click', function() {
