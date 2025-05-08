@@ -35,14 +35,24 @@
         
         /* Map containers */
         #map {
-            height: 60vh;
+            height: calc(100vh - 56px - 56px); /* viewport - header - nav */
             width: 100%;
-            transition: all 0.3s ease;
         }
         
         #full-map {
-            height: calc(100vh - 56px);
+            height: calc(100vh - 56px - 56px); /* viewport - header - nav */
             width: 100%;
+        }
+        
+        /* Remove any overflow constraints */
+        body, html, #app-container {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        /* Ensure content doesn't hide behind nav */
+        #pages-container {
+            padding-bottom: 56px; /* Matches nav height */
         }
         
         /* Custom marker styling */
@@ -51,7 +61,7 @@
         }
         
         .bus-marker {
-            background-image: url('https://cdn-icons-png.flaticon.com/512/477/477103.png');
+            background-image: url('jeepney.png');
             background-size: cover;
             width: 24px;
             height: 24px;
@@ -147,6 +157,26 @@
             border: 2px solid white;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
         }
+
+        #app-container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            background-color: white;
+        }
+
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+            z-index: 100;
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
@@ -785,7 +815,11 @@
                 center: [121.7333, 17.6131], // Tuguegarao coordinates
                 zoom: 13
             });
-            
+
+            homeMap.on('load', function() {
+                homeMap.resize(); // Force a resize after load
+            });
+
             // Full screen map
             fullMap = new mapboxgl.Map({
                 container: 'full-map',
@@ -794,6 +828,10 @@
                 zoom: 13
             });
             
+            fullMap.on('load', function() {
+                fullMap.resize(); // Force a resize after load
+            });
+
             // Add controls to both maps
             [homeMap, fullMap].forEach(map => {
                 map.addControl(new mapboxgl.NavigationControl());
@@ -845,6 +883,35 @@
             addJeepneysToMap(homeMap);
             addJeepneysToMap(fullMap);
         }
+
+        // Add this right after map initialization
+        function ensureMapVisibility() {
+        // Wait for DOM updates then resize
+            setTimeout(() => {
+                if (homeMap) homeMap.resize();
+                if (fullMap) fullMap.resize();
+                
+                // If on map page, recenter
+                if (document.getElementById('map-page').classList.contains('active') && userLocation) {
+                    fullMap.flyTo({
+                        center: userLocation,
+                        zoom: 15
+                    });
+                }
+            }, 100);
+        }
+
+    // Call these events
+        window.addEventListener('resize', ensureMapVisibility);
+        document.addEventListener('DOMContentLoaded', ensureMapVisibility);
+
+        // Update your navigation click handler to include:
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                // ... your existing code ...
+                ensureMapVisibility(); // Add this line
+            });
+        });
         
         // Add route lines and stops to a map
         function addRoutesToMap(map) {
@@ -936,6 +1003,16 @@
                     animateJeepney(marker, route, nextStopIndex);
                 }
             });
+        }
+
+        function resizeMaps() {
+            if (homeMap) homeMap.resize();
+            if (fullMap) fullMap.resize();
+        }
+        
+        // Call this when switching to map page
+        function showMapPage() {
+            setTimeout(resizeMaps, 100);
         }
         
         // Animate a jeepney marker along its route
