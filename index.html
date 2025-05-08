@@ -177,6 +177,22 @@
             z-index: 100;
         }
 
+        /* Ratings Page Styles */
+        #ratings-page .page {
+            padding-bottom: 80px; /* Extra space for floating button */
+        }
+
+        /* Rating Modal Styles */
+        #rating-modal {
+            transition: all 0.3s ease;
+        }
+
+        /* Star Rating Hover Effect */
+        #rating-stars i:hover,
+        #rating-stars i:hover ~ i {
+            color: #fbbf24 !important; /* yellow-400 */
+        }
+
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
@@ -222,6 +238,57 @@
                     <button id="signup-btn" class="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Create Account</button>
                     <p class="text-center text-sm text-gray-600">Already have an account? <a href="#" id="show-login" class="text-blue-600">Sign in</a></p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Form Modal -->
+    <div id="rating-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="p-4 border-b">
+                <h3 class="font-bold text-lg">Rate Your Jeepney Ride</h3>
+            </div>
+            
+            <div class="p-4">
+                <div class="mb-4">
+                    <label class="block mb-2">Select Route</label>
+                    <select class="w-full p-2 border rounded">
+                        <option>Route 1A - Centro to Cataggaman</option>
+                        <option>Route 2B - Centro to Pengue Ruyu</option>
+                        <option>Route 3C - Centro to Ugac</option>
+                    </select>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block mb-2">Jeepney Number</label>
+                    <input type="text" placeholder="e.g. 123" class="w-full p-2 border rounded">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block mb-2">Driver Name (if known)</label>
+                    <input type="text" placeholder="e.g. Juan Dela Cruz" class="w-full p-2 border rounded">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block mb-2">Your Rating</label>
+                    <div class="flex space-x-1 text-2xl text-gray-300" id="rating-stars">
+                        <i class="fas fa-star cursor-pointer" data-rating="1"></i>
+                        <i class="fas fa-star cursor-pointer" data-rating="2"></i>
+                        <i class="fas fa-star cursor-pointer" data-rating="3"></i>
+                        <i class="fas fa-star cursor-pointer" data-rating="4"></i>
+                        <i class="fas fa-star cursor-pointer" data-rating="5"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block mb-2">Your Review</label>
+                    <textarea class="w-full p-2 border rounded" rows="3" placeholder="Share your experience..."></textarea>
+                </div>
+            </div>
+            
+            <div class="p-4 border-t flex justify-end space-x-2">
+                <button id="cancel-rating" class="px-4 py-2 border rounded-lg">Cancel</button>
+                <button id="submit-rating" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Submit</button>
             </div>
         </div>
     </div>
@@ -495,6 +562,68 @@
                 </div>
             </div>
             
+            <!-- Ratings Page -->
+            <div id="ratings-page" class="page pb-20">
+                <div class="p-4">
+                    <h2 class="text-lg font-semibold mb-3 flex items-center">
+                        <i class="fas fa-star mr-2 text-yellow-500"></i> Driver & Jeepney Ratings
+                    </h2>
+                    
+                    <!-- Search/Filters -->
+                    <div class="mb-4 flex space-x-2">
+                        <input type="text" placeholder="Search drivers or jeepneys..." 
+                            class="flex-1 p-2 border rounded-lg">
+                        <button class="bg-blue-600 text-white px-4 rounded-lg">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Rating Cards -->
+                    <div class="space-y-4">
+                        <!-- Sample Rating Card 1 -->
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h3 class="font-bold">Route 1A - Jeepney #123</h3>
+                                    <p class="text-sm text-gray-600">Driver: Juan Dela Cruz</p>
+                                </div>
+                                <div class="flex items-center bg-yellow-100 px-2 py-1 rounded-full">
+                                    <span class="text-yellow-800 font-bold">4.2</span>
+                                    <i class="fas fa-star text-yellow-500 ml-1"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-2 flex space-x-1 text-yellow-400">
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star"></i>
+                                <i class="fas fa-star-half-alt"></i>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <p class="text-sm">"Very safe driver and clean jeepney"</p>
+                                <p class="text-xs text-gray-500 mt-1">- Maria Santos, 2 days ago</p>
+                            </div>
+                            
+                            <button class="mt-3 text-blue-600 text-sm font-medium">
+                                See all 15 reviews
+                            </button>
+                        </div>
+                        
+                        <!-- Sample Rating Card 2 -->
+                        <div class="bg-white rounded-lg shadow p-4">
+                            <!-- Similar structure for other ratings -->
+                        </div>
+                    </div>
+                    
+                    <!-- Add Rating Button -->
+                    <button id="add-rating-btn" class="fixed bottom-20 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Alerts Page -->
             <div id="alerts-page" class="page pb-20">
                 <div class="p-4">
@@ -706,6 +835,10 @@
             <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center" data-page="routes-page">
                 <i class="fas fa-route text-xl"></i>
                 <span class="text-xs mt-1">Routes</span>
+            </a>
+            <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center" data-page="ratings-page">
+                <i class="fas fa-star text-xl"></i>
+                <span class="text-xs mt-1">Ratings</span>
             </a>
             <a href="#" class="nav-link p-2 text-gray-500 flex flex-col items-center relative" data-page="alerts-page">
                 <i class="fas fa-bell text-xl"></i>
@@ -941,6 +1074,49 @@
                 }
             }, 100);
         }
+
+        // Rating System Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show rating modal
+            document.getElementById('add-rating-btn').addEventListener('click', function() {
+                document.getElementById('rating-modal').classList.remove('hidden');
+            });
+            
+            // Hide rating modal
+            document.getElementById('cancel-rating').addEventListener('click', function() {
+                document.getElementById('rating-modal').classList.add('hidden');
+            });
+            
+            // Star rating interaction
+            const stars = document.querySelectorAll('#rating-stars i');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const rating = parseInt(this.getAttribute('data-rating'));
+                    stars.forEach((s, index) => {
+                        if (index < rating) {
+                            s.classList.add('text-yellow-400');
+                            s.classList.remove('text-gray-300');
+                        } else {
+                            s.classList.remove('text-yellow-400');
+                            s.classList.add('text-gray-300');
+                        }
+                    });
+                });
+            });
+            
+            // Submit rating (in a real app, this would send to backend)
+            document.getElementById('submit-rating').addEventListener('click', function() {
+                // Here you would collect form data and send to your backend
+                alert('Rating submitted!');
+                document.getElementById('rating-modal').classList.add('hidden');
+                
+                // Reset form
+                stars.forEach(star => {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                });
+            });
+        });
 
     // Call these events
         window.addEventListener('resize', ensureMapVisibility);
